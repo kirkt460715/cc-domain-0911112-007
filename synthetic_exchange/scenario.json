@@ -1,0 +1,110 @@
+{
+  "limit": 3,
+  "readings": [
+    {
+      "id": "r1",
+      "segment": "counter",
+      "at": 10,
+      "value": 5,
+      "revision": 1
+    },
+    {
+      "id": "r2",
+      "segment": "counter",
+      "at": 20,
+      "value": 10,
+      "revision": 1
+    },
+    {
+      "id": "r3",
+      "segment": "counter",
+      "at": 30,
+      "value": 15,
+      "revision": 1
+    },
+    {
+      "id": "r4",
+      "segment": "counter",
+      "at": 40,
+      "value": 20,
+      "revision": 1
+    },
+    {
+      "id": "r5",
+      "segment": "counter",
+      "at": 50,
+      "value": 25,
+      "revision": 1
+    },
+    {
+      "id": "r6",
+      "segment": "counter",
+      "at": 60,
+      "value": 30,
+      "revision": 1
+    },
+    {
+      "id": "r7",
+      "segment": "counter",
+      "at": 70,
+      "value": 35,
+      "revision": 1
+    },
+    {
+      "id": "r8",
+      "segment": "counter",
+      "at": 80,
+      "value": 40,
+      "revision": 1
+    },
+    {
+      "id": "hot0",
+      "segment": "counter2",
+      "at": 100,
+      "value": 0,
+      "revision": 1
+    },
+    {
+      "id": "hot1",
+      "segment": "counter2",
+      "at": 100,
+      "value": 1,
+      "revision": 1
+    },
+    {
+      "id": "hot2",
+      "segment": "counter2",
+      "at": 100,
+      "value": 2,
+      "revision": 1
+    },
+    {
+      "id": "hot3",
+      "segment": "counter2",
+      "at": 100,
+      "value": 3,
+      "revision": 1
+    },
+    {
+      "id": "hot4",
+      "segment": "counter2",
+      "at": 100,
+      "value": 4,
+      "revision": 1
+    }
+  ],
+  "routes": [
+    {
+      "path": "/capabilities",
+      "responses": [
+        {
+          "json": {
+            "resolution_seconds": 1,
+            "limit": 3,
+            "interval": "[from,until)"
+          }
+        }
+      ]
+    }
+  ]
+}
