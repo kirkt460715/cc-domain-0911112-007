@@ -27,6 +27,13 @@ def main(argv=None):
     ingest.add_argument("--preview", action="store_true")
     verify = commands.add_parser("verify")
     verify.add_argument("file")
+    harvest = commands.add_parser("harvest")
+    harvest.add_argument("request")
+    harvest.add_argument("--gateway", required=True)
+    harvest.add_argument("--timeout", type=int, default=5)
+    drill = commands.add_parser("harvest-drill")
+    drill.add_argument("--scenario", default="synthetic_exchange/drill_scenario.json")
+    drill.add_argument("--port", type=int, default=0)
     args = parser.parse_args(argv)
     try:
         if args.command == "demo":
@@ -37,6 +44,10 @@ def main(argv=None):
             from .interfaces.bundles import Bundles
 
             result = Bundles.verify(args.file)
+        elif args.command == "harvest-drill":
+            from .metering.drill import run_drill
+
+            result = run_drill(args.scenario, args.port)
         else:
             with EnergyService(args.db) as service:
                 if args.command == "describe":
@@ -48,6 +59,11 @@ def main(argv=None):
                         if args.preview
                         else service.readings.import_batch(args.batch, rows)
                     )
+                elif args.command == "harvest":
+                    from .metering.gateway import GatewayClient
+
+                    service.attach_gateway(GatewayClient(args.gateway, timeout=args.timeout))
+                    result = service.dispatch(parse_json(load(args.request)))
                 else:
                     result = service.dispatch(parse_json(load(args.request)))
         print(canonical({"ok": True, "result": result}))

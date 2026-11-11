@@ -50,9 +50,10 @@ class Readings:
             "note": note,
         }
 
-    def add(self, data):
+    def add(self, data, initial_revision=1):
         normalized = self.normalize(data)
         checksum = fingerprint(normalized)
+        integer(initial_revision, 1)
         with self.store.atomic() as con:
             old = self.store.one(
                 "SELECT id FROM readings WHERE id=?", (normalized["id"],)
@@ -78,24 +79,29 @@ class Readings:
                     existing=occupied["id"],
                 )
             con.execute(
-                "INSERT INTO readings VALUES(?,?,?,?,?,1,?,?)",
+                "INSERT INTO readings VALUES(?,?,?,?,?,?,?,?)",
                 (
                     normalized["id"],
                     normalized["segment"],
                     normalized["at"],
                     normalized["value"],
                     normalized["kind"],
+                    initial_revision,
                     canonical(normalized),
                     checksum,
                 ),
             )
             con.execute(
-                "INSERT INTO reading_history VALUES(?,1,?,?,?)",
+                "INSERT INTO reading_history VALUES(?,?,?,?,?)",
                 (
                     normalized["id"],
+                    initial_revision,
                     canonical(normalized),
                     checksum,
-                    "initial ingestion",
+                    "initial ingestion"
+                    if initial_revision == 1
+                    else "gateway ingestion at remote revision "
+                    + str(initial_revision),
                 ),
             )
             self.store.event("reading_added", normalized["id"], {"digest": checksum})

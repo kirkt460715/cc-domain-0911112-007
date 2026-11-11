@@ -1,0 +1,44 @@
+{
+  "limit": 3,
+  "readings": [
+    {"id": "c1", "meter": "main", "segment": "counter", "at": 10, "value": 5, "revision": 1},
+    {"id": "c2", "meter": "main", "segment": "counter", "at": 20, "value": 10, "revision": 1},
+    {"id": "c3", "meter": "main", "segment": "counter", "at": 30, "value": 15, "revision": 1},
+    {"id": "c4", "meter": "main", "segment": "counter", "at": 40, "value": 20, "revision": 1},
+    {"id": "c5", "meter": "main", "segment": "counter", "at": 50, "value": 25, "revision": 1},
+    {"id": "c6", "meter": "main", "segment": "counter", "at": 60, "value": 30, "revision": 1},
+    {"id": "c7", "meter": "main", "segment": "counter", "at": 70, "value": 35, "revision": 1},
+    {"id": "c8", "meter": "main", "segment": "counter", "at": 80, "value": 40, "revision": 1},
+    {"id": "h0", "meter": "hot", "segment": "counter2", "at": 100, "value": 0, "revision": 1},
+    {"id": "h1", "meter": "hot", "segment": "counter2", "at": 100, "value": 1, "revision": 1},
+    {"id": "h2", "meter": "hot", "segment": "counter2", "at": 100, "value": 2, "revision": 1},
+    {"id": "h3", "meter": "hot", "segment": "counter2", "at": 100, "value": 3, "revision": 1},
+    {"id": "h4", "meter": "hot", "segment": "counter2", "at": 100, "value": 4, "revision": 1},
+    {"id": "r0", "meter": "main", "segment": "counter", "at": 120, "value": 50, "revision": 1},
+    {"id": "r1b", "meter": "main", "segment": "counter", "at": 130, "value": 60, "revision": 1},
+    {"id": "r2", "meter": "main", "segment": "counter", "at": 160, "value": 75, "revision": 1},
+    {"id": "r3", "meter": "main", "segment": "counter", "at": 200, "value": 90, "revision": 1}
+  ],
+  "reading_script": {
+    "failures": {
+      "main:0:201": {"status": 503, "json": {"error": "scheduled outage"}}
+    },
+    "revisions": {
+      "main:100:150": {"passes": [{}, {"r1b": {"revision": 2, "value": 63}}]}
+    }
+  },
+  "routes": [
+    {
+      "path": "/capabilities",
+      "responses": [
+        {
+          "json": {
+            "resolution_seconds": 1,
+            "limit": 3,
+            "interval": "[from,until)"
+          }
+        }
+      ]
+    }
+  ]
+}

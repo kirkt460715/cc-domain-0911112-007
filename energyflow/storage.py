@@ -27,6 +27,30 @@ CREATE TABLE IF NOT EXISTS closures(id TEXT PRIMARY KEY,start INTEGER NOT NULL,e
  state TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS corrections(id TEXT PRIMARY KEY,closure TEXT NOT NULL,payload TEXT NOT NULL,
  digest TEXT NOT NULL,approved INTEGER NOT NULL,operator TEXT);
+CREATE TABLE IF NOT EXISTS harvest_jobs(id TEXT PRIMARY KEY,meter TEXT NOT NULL,start INTEGER NOT NULL,
+ end INTEGER NOT NULL,resolution INTEGER NOT NULL,limit_rows INTEGER NOT NULL,lookback INTEGER NOT NULL,
+ budget INTEGER NOT NULL,state TEXT NOT NULL,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,
+ payload TEXT NOT NULL,digest TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS harvest_job_time ON harvest_jobs(meter,start,end);
+CREATE TABLE IF NOT EXISTS harvest_windows(id TEXT PRIMARY KEY,job TEXT NOT NULL,meter TEXT NOT NULL,
+ start INTEGER NOT NULL,end INTEGER NOT NULL,state TEXT NOT NULL,attempts INTEGER NOT NULL,
+ reason TEXT,truncated INTEGER NOT NULL,row_count INTEGER NOT NULL,request_count INTEGER NOT NULL,
+ updated_at INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS harvest_window_state ON harvest_windows(job,state,start);
+CREATE TABLE IF NOT EXISTS harvest_observations(id TEXT NOT NULL,job TEXT NOT NULL,meter TEXT NOT NULL,
+ segment TEXT NOT NULL,at INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,
+ digest TEXT NOT NULL,state TEXT NOT NULL,detail TEXT,first_window TEXT NOT NULL,
+ first_seen INTEGER NOT NULL,last_seen INTEGER NOT NULL,PRIMARY KEY(id,job));
+CREATE INDEX IF NOT EXISTS harvest_obs_state ON harvest_observations(job,state,at,id);
+CREATE TABLE IF NOT EXISTS harvest_hotspots(job TEXT NOT NULL,window_id TEXT NOT NULL,
+ at INTEGER NOT NULL,observation_ids TEXT NOT NULL,PRIMARY KEY(job,window_id,at));
+CREATE TABLE IF NOT EXISTS harvest_ingest(job TEXT NOT NULL,seq INTEGER NOT NULL,
+ observation_id TEXT NOT NULL,remote_revision INTEGER NOT NULL,local_revision INTEGER,
+ outcome TEXT NOT NULL,detail TEXT NOT NULL,at INTEGER NOT NULL,
+ PRIMARY KEY(job,seq));
+CREATE TABLE IF NOT EXISTS harvest_runs(job TEXT NOT NULL,run_seq INTEGER NOT NULL,
+ requests_used INTEGER NOT NULL,started_at INTEGER NOT NULL,finished_at INTEGER,
+ payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(job,run_seq));
 CREATE TABLE IF NOT EXISTS audit(seq INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,
  entity TEXT NOT NULL,payload TEXT NOT NULL,previous TEXT NOT NULL,digest TEXT NOT NULL);
 """

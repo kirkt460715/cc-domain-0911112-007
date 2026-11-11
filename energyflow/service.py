@@ -4,6 +4,7 @@ from .metering.catalog import Catalog
 from .metering.readings import Readings
 from .metering.reconstruct import Reconstructor
 from .metering.reconciliation import MeterBalance
+from .metering.harvest import Harvest
 from .allocation.rules import ProductionCalendar
 from .allocation.engine import Allocator
 from .settlement.tariffs import Tariffs
@@ -31,6 +32,7 @@ class EnergyService:
         self.bundles = Bundles(self.closing)
         self.balance = MeterBalance(self.catalog, self.reconstruction)
         self.demand = Demand(self.reconstruction)
+        self.harvest = None
         self.quality = Quality(
             self.store,
             self.catalog,
@@ -40,6 +42,11 @@ class EnergyService:
             self.tariffs,
             self.emissions,
         )
+
+    def attach_gateway(self, gateway):
+        """绑定设备网关客户端（HTTP 客户端或测试替身），建立采集引擎。"""
+        self.harvest = Harvest(self.store, self.catalog, self.readings, gateway)
+        return {"attached": True, "capabilities": gateway.capabilities()}
 
     def actions(self):
         definitions = [
@@ -180,6 +187,30 @@ class EnergyService:
                 ["verify_audit", "audit_page", "integrity", "backup"],
             ),
         ]
+        if self.harvest is not None:
+            definitions.append(
+                (
+                    "harvest",
+                    self.harvest,
+                    [
+                        "create_job",
+                        "get_job",
+                        "list_jobs",
+                        "run",
+                        "retry_failures",
+                        "retry_window",
+                        "reobserve",
+                        "lookback",
+                        "ingest",
+                        "coverage",
+                        "report",
+                        "observations",
+                        "windows",
+                        "ingest_log",
+                        "verify_integrity",
+                    ],
+                )
+            )
         result = {}
         for prefix, target, methods in definitions:
             for method in methods:

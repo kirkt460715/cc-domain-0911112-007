@@ -4,7 +4,7 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 
 def make_server(scenario,port=0):
-    counts={}; audit=[]; lock=threading.Lock()
+    counts={}; audit=[]; lock=threading.Lock(); failure_counts={}
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args): pass
         def do_POST(self): self.serve()
@@ -21,7 +21,44 @@ def make_server(scenario,port=0):
                               'if_none_match':self.headers.get('If-None-Match')})
             if parsed.path=='/readings' and 'readings' in scenario:
                 start=int(query.get('from',['0'])[0]); end=int(query.get('until',['0'])[0]); limit=scenario.get('limit',3)
-                rows=[r for r in scenario['readings'] if start<=r['at']<end]
+                meter=query.get('meter',[None])[0]
+                script=scenario.get('reading_script',{})
+                key=f'{meter}:{start}:{end}' if meter is not None else f'{start}:{end}'
+                if key in script.get('failures',{}):
+                    failure=script['failures'][key]
+                    with lock:
+                        fired=failure_counts.get(key,0); failure_counts[key]=fired+1
+                    repeat=failure.get('repeat','once')
+                    should_fail = repeat=='always' or (repeat=='once' and fired==0) or (
+                        repeat=='times' and fired<int(failure.get('times',1)))
+                    if should_fail:
+                        return self.reply(int(failure.get('status',503)),{'Content-Type':'application/json'},
+                                          json.dumps(failure.get('json',{'error':'scripted failure'})).encode())
+                pool=[r for r in scenario['readings'] if start<=r['at']<end]
+                if meter is not None:
+                    pool=[r for r in pool if r.get('meter')==meter or ('meter' not in r and r.get('segment')==meter)]
+                revision_rule=script.get('revisions',{}).get(key)
+                if revision_rule is not None:
+                    if isinstance(revision_rule,dict) and 'passes' in revision_rule:
+                        with lock:
+                            seen=failure_counts.get('rev:'+key,0); failure_counts['rev:'+key]=seen+1
+                        override={}
+                        for index,pass_map in enumerate(revision_rule['passes']):
+                            if seen>=index:
+                                override.update(pass_map)
+                        def patched(row):
+                            copy=dict(row)
+                            spec=override.get(row['id'])
+                            if spec is not None:
+                                if isinstance(spec,dict):
+                                    copy.update(spec)
+                                else:
+                                    copy['revision']=spec
+                            return copy
+                        pool=[patched(r) for r in pool]
+                    else:
+                        pool=[dict(r,revision=revision_rule.get(r['id'],r['revision'])) for r in pool]
+                rows=pool
                 return self.reply(200,{'Content-Type':'application/json'},json.dumps({'items':rows[:limit],'truncated':len(rows)>limit}).encode())
             candidates=[r for r in scenario['routes'] if r.get('method','GET')==self.command and r['path']==parsed.path and all(query.get(k)==[str(v)] for k,v in r.get('query',{}).items())]
             if not candidates: return self.reply(404,{},b'unknown local route')
